@@ -1,0 +1,26 @@
+@startuml
+
+Start
+partition Preparation {
+    :camera_calibration;
+}
+:initialize left_lane & right_lane instance;
+partition lane_detection{
+    partition perspective_transform {
+        :create binary image by applying color & gradient thresholding;
+        :extract ROI;
+        partition cal_undistort{
+            :load object & image points;
+            :calibrate camera;
+            :undistort image; 
+        }
+    :init_centroid of left_lane & right_lane;
+    :update_polycoeff for both left & right lane;
+    :draw detected lane on origin image;
+    :update curvature & veh position;
+    }
+    :output image;
+}
+Stop
+
+@enduml
