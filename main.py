@@ -14,13 +14,13 @@ cline = importlib.import_module('line_class')
 # global variable
 nwindow = 9
 margin = 100
-mpixel = 30
+mpixel = 50
 us_line_long = 30
 us_line_wide = 3.7
 
 left_line = cline.Line(nwindow, margin, mpixel, 0, us_line_long, us_line_wide)
 right_line = cline.Line(nwindow, margin, mpixel, 0, us_line_long, us_line_wide)
-
+gl_count =1
 # unit test for each processing step
 # 1. cal_undistort
 # 2. grd_color_thresh
@@ -126,7 +126,7 @@ def cal_undistort(img):
     return undist
 
 # Gradient & color thresholding
-def grd_color_thresh(img, g_thresh=(170,255), s_thresh=(170, 255), sx_thresh=(20, 100)):
+def grd_color_thresh(img, g_thresh=(170,255), s_thresh=(150, 190), sx_thresh=(20, 100), h_thresh = (15,20)):
     # create local copy
     img = np.copy(img)
 
@@ -139,11 +139,14 @@ def grd_color_thresh(img, g_thresh=(170,255), s_thresh=(170, 255), sx_thresh=(20
 
     # Convert to HLS color space and separate the V channel
     hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
-    l_channel = hls[:,:,1]
+    h_channel = hls[:,:,0]
     s_channel = hls[:,:,2]
     # Threshold s_color channel
     s_binary = np.zeros_like(s_channel)
     s_binary[(s_channel >= s_thresh[0]) & (s_channel <= s_thresh[1])] = 1
+
+    h_binary = np.zeros_like(h_channel)
+    h_binary[(h_channel >= h_thresh[0]) & (h_channel <= h_thresh[1])] = 1
 
     # Sobel x
     sobelx = cv2.Sobel(s_channel, cv2.CV_64F, 1, 0) # Take the derivative in x
@@ -159,7 +162,8 @@ def grd_color_thresh(img, g_thresh=(170,255), s_thresh=(170, 255), sx_thresh=(20
 
     # Stack each channel
     combined_binary = np.zeros_like(s_channel)
-    combined_binary[(s_binary == 1) | (sxbinary == 1) | (g_binary == 1)] = 1
+    combined_binary[((s_binary == 1) & (h_binary == 1) & (sxbinary == 1)) | ((g_binary == 1) & (sxbinary == 1))] = 1
+
     return combined_binary
 
 # extract region of interest
@@ -255,8 +259,8 @@ def init_centroid(wrapped_img):
     # Find the peak of the left and right halves of the histogram
     # These will be the starting point for the left and right lines
     midpoint = np.int(histogram.shape[0]//2)
-    left_centroid = np.argmax(histogram[:midpoint])
-    right_centroid = np.argmax(histogram[midpoint:]) + midpoint
+    left_centroid = np.argmax(histogram[:400])
+    right_centroid = np.argmax(histogram[900:]) + 900
 
     return left_centroid, right_centroid
 
@@ -283,6 +287,12 @@ def detect_lane(img):
             output = draw_text(output,"Vehicle is on center of the road".format(abs(veh_pos)),2)
     else:
         output = img
+
+    if((left_line.detected == False) | (right_line.detected == False)):
+        global gl_count
+        cv2.imwrite(("debug/" + str(gl_count) + ".jpg"),img)
+        gl_count += 1
+        
     return output
 
 def get_lane_mid():
@@ -356,15 +366,17 @@ def feed_video_through_pipline(video_path):
     clip.write_videofile(outclip, audio=False)
     return
 
-feed_video_through_pipline("project_video.mp4")
+
 if (os.path.isfile("debug.txt")):
     os.remove("debug.txt")
+
+feed_video_through_pipline("project_video.mp4")
 #feed_video_through_pipline("challenge_video.mp4")
-'''
-series = glob.glob("test_images/straight_lines1.jpg")
+
+'''series = glob.glob("debug/3.jpg")
 for fname in series:
     image = cv2.imread(fname)
     gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     img = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
-    sanity_check_save_image(image, detect_lane,"output_images/straight_lines1.jpg")
-'''
+    sanity_check(image, detect_lane,color="BGR")'''
+

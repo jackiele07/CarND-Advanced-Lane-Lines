@@ -88,7 +88,11 @@ class Line():
 
         self.sliding_window =[]
 
-        self.epsilon = float(3 * (10 ** (-3)))
+        self.epsilon = float(4 * (10 ** (-3)))
+
+        self.epsilon2 = float(100)
+
+        self.epsilon3 = float(500)
 
     def update_curvature(self):
         self.radius_of_curvature_value = np.average(self.radius_of_curvature)
@@ -123,15 +127,19 @@ class Line():
 
             if(self.detected == True):
                 if(self.has_data == True):
-                    self.diffs = np.abs(var_current_fit - self.best_fit)
-                    if ((np.absolute(self.diffs[0]) < self.epsilon)):
-                        if(self.count == 6):
+                    self.diffs = np.absolute(var_current_fit - self.best_fit)
+                    if ((self.diffs[0] < self.epsilon) & (self.diffs[1] < self.epsilon2)):
+                        if (self.diffs[2] > self.epsilon3):
+                            var_current_fit[2] = self.best_fit[2]
+                        if(self.count == 10):
                             self.count = 0
                         if(len(self.current_fit) > self.count):
                             self.current_fit.pop(self.count)
-                        self.current_fit.insert(self.count, np.polyfit(self.ally, self.allx, 2))
+                        self.current_fit.insert(self.count, var_current_fit)
                         self.best_fit = np.average(self.current_fit, axis=0)
                         self.radius_of_curvature.append(((1 + (2*self.current_fit_cr[0]*max(self.ally)*ym_per_pix + self.current_fit_cr[1])**2)**1.5) / np.absolute(2*self.current_fit_cr[0]))
+                    else:
+                        self.detected = False
                 else:
                     self.current_fit.insert(self.count, np.polyfit(self.ally, self.allx, 2))
                     self.best_fit = self.current_fit[-1]
@@ -147,9 +155,6 @@ class Line():
                     self.bestx  = 1*ycal**2 + 1*ycal
                 print("+++++++++++", file=open("debug.txt", "a"))
                 print (self.diffs,file=open("debug.txt", "a"))
-                print("----", file=open("debug.txt", "a"))
-                for data in self.current_fit:
-                    print (data,file=open("debug.txt", "a"))
                 print("----", file=open("debug.txt", "a"))
                 print (self.best_fit,file=open("debug.txt", "a"))
 

@@ -20,6 +20,7 @@ The steps of this project are the following:
 [image04]: ./output_images/warped.png "Waped Images"
 [image05]: ./output_images/sliding_window.png "Sliding Window"
 [image06]: ./output_images/straight_lines1.jpg "Straight Line"
+[image07]: ./output_images/undistort.png "Undistort image"
 [video1]: ./project_video.mp4 "Video"
 
 ---
@@ -54,13 +55,13 @@ The code for this step is contained in the third code cell of the `main.py` loca
 
 I start by loading the `calibrate.pickle` to `objpoints` and `imgpoints` and use those data to calibrate the camera and calling `undistort` to get the output image as following
 
-![Undistort example][image1]
+![Undistort example][image07]
 
 ### Pipeline (single images)
 
 #### 1. Create binary image by applying color & gradient thresholds & extract ROI
 
-Firstly, I apply the sobelx to compute the gradient with thresholds `sx_thresh=(20, 100)`. In order to increase the confidence of detection left lane & right lane, I have also combine the color thresholds for green channel of RGB because it give better information of detecting white lane & s channel of HLS since it give best information of detecting yellow lane `g_thresh=(170,255)`, `s_thresh=(170, 255)`. The combined binary image is calculated as following: `combined_binary[(s_binary == 1) | (sxbinary == 1) | (g_binary == 1)] = 1`
+Firstly, I apply the sobelx to compute the gradient with thresholds `sx_thresh=(20, 100)`. In order to increase the confidence of detection left lane & right lane, I have also combine the color thresholds for green channel of RGB because it give better information of detecting white lane & s channel of HLS since it give best information of detecting yellow lane `g_thresh=(170,255)`, `s_thresh=(150, 190)`, `h_thresh = (15,20)`. The combined binary image is calculated as following: `combined_binary[((s_binary == 1) & (h_binary == 1) & (sxbinary == 1)) | ((g_binary == 1) & (sxbinary == 1))] = 1`
 
 ![Combined binary][image03]
 
